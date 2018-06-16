@@ -1,0 +1,4 @@
+*.pyc
+/.idea
+/.pipenv
+/pip.json
