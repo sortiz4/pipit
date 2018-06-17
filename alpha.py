@@ -2,8 +2,8 @@ import gettext
 
 # Hash map of the replacement strings
 MAP = {
-    'optional arguments': 'Options',
-    'positional arguments': 'Positionals',
+    'optional arguments': 'Optional arguments',
+    'positional arguments': 'Positional arguments',
     'show this help message and exit': 'Show this help message and exit.',
     'usage: ': 'Usage: ',
 }

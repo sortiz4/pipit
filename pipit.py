@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import alpha
 import argparse
 import json
@@ -71,7 +70,15 @@ class Pip:
         Loads the dependency file.
         """
         with open(cls.file) as file:
-            return json.load(file)
+            pip = json.load(file)
+        for field in [DEP, DEV]:
+            try:
+                schema = pip[field]
+            except KeyError:
+                continue
+            # Normalize the package names
+            pip[field] = {k.lower(): v for k, v in schema.items()}
+        return pip
 
     @classmethod
     def write(cls, pip):
@@ -110,7 +117,7 @@ class Pip:
         """
         Uninstalls the given packages.
         """
-        return cls.run('uninstall', *args)
+        return cls.run('uninstall', '-y', *args)
 
     @classmethod
     def update(cls, *args):
@@ -146,7 +153,7 @@ class Pip:
 
 class Command:
     """
-    The actual command which depends on virtualenv and pip.
+    The actual command including the parser.
     """
 
     def __init__(self, *args):
@@ -154,63 +161,82 @@ class Command:
         Initializes and parses the arguments.
         """
         parser = argparse.ArgumentParser(
-            description='Automates common virtualenv and pip tasks.',
+            description='Yet another Python dependency manager.',
         )
         parser.add_argument(
-            '-v', '--version',
-            action='version', version='%(prog)s 1.0',
-            help="Shows the program's version and exit.",
+            '-v',
+            '--version',
+            action='version',
+            version='%(prog)s 1.0',
+            help="Show this program's version and exit.",
         )
         parser.set_defaults(func=lambda: None)
         subparsers = parser.add_subparsers()
 
         # Defines the `new` command
         new = subparsers.add_parser(
-            'new', description='Creates a new virtual environment.',
+            'new',
+            description='Create a new virtual environment.',
         )
         new.add_argument(
-            'path', nargs='?', help='The installation location.',
+            'path',
+            nargs='?',
+            help='Where to install the environment.',
         )
         new.set_defaults(func=self.new)
 
         # Defines the `install` command
         install = subparsers.add_parser(
-            'install', description='Installs packages.',
+            'install',
+            description='Install packages and dependencies.',
         )
         install.add_argument(
-            'packages', nargs='*', help='Packages to install.',
+            'packages',
+            nargs='*',
+            help='A list of packages to install.',
         )
         install.add_argument(
-            '-d', '--dev', action='store_true',
-            help='Installs development packages or dependencies.',
+            '-d',
+            '--dev',
+            action='store_true',
+            help='Install development packages or dependencies.',
         )
         install.set_defaults(func=self.install)
 
         # Defines the `uninstall` command
         uninstall = subparsers.add_parser(
-            'uninstall', description='Uninstalls packages.',
+            'uninstall',
+            description='Uninstall packages and dependencies.',
         )
         uninstall.add_argument(
-            'packages', nargs='+', help='Packages to uninstall.',
+            'packages',
+            nargs='+',
+            help='A list of packages to uninstall.',
         )
         uninstall.set_defaults(func=self.uninstall)
 
         # Defines the `update` command
         update = subparsers.add_parser(
-            'update', description='Updates installed packages.',
+            'update',
+            description='Update installed PyPI dependencies.',
         )
         update.add_argument(
-            'packages', nargs='*', help='Packages to update.',
+            'packages',
+            nargs='*',
+            help='A list of packages to update.',
         )
         update.set_defaults(func=self.update)
 
         # Defines the `list` command
         list = subparsers.add_parser(
-            'list', description='Lists installed packages.',
+            'list',
+            description='List installed packages.',
         )
         list.add_argument(
-            '-o', '--outdated', action='store_true',
-            help='Lists outdated packages.',
+            '-o',
+            '--outdated',
+            action='store_true',
+            help='Only list outdated packages.',
         )
         list.set_defaults(func=self.list)
 
@@ -256,7 +282,7 @@ class Command:
 
     def install(self):
         """
-        Installs and saves packages.
+        Installs packages and dependencies.
         """
         try:
             pip = Pip.read()
@@ -347,7 +373,7 @@ class Command:
 
     def uninstall(self):
         """
-        Uninstalls and deletes packages.
+        Uninstalls packages and dependencies.
         """
         try:
             pip = Pip.read()
@@ -374,7 +400,7 @@ class Command:
 
     def update(self):
         """
-        Updates installed PyPI packages.
+        Updates installed PyPI dependencies.
         """
         try:
             pip = Pip.read()
@@ -383,11 +409,11 @@ class Command:
 
         # Compute the minimum updatable set (exclude external packages)
         dependencies = {*{
-                name.lower() for name, info
+                name for name, info
                 in pip.get(DEP, {}).items()
                 if isupdatable(info)
             }, *{
-                name.lower() for name, info
+                name for name, info
                 in pip.get(DEV, {}).items()
                 if isupdatable(info)
         }}
