@@ -178,6 +178,7 @@ class Command:
         Initializes and parses the arguments.
         """
         parser = argparse.ArgumentParser(
+            usage='%(prog)s [options] [command]',
             description='Yet another Python dependency manager.',
         )
         parser.add_argument(
@@ -188,11 +189,12 @@ class Command:
             help="Show this program's version and exit.",
         )
         parser.set_defaults(func=lambda: None)
-        subparsers = parser.add_subparsers()
+        subparsers = parser.add_subparsers(prog=self.name)
 
         # Defines the `new` command
         new = subparsers.add_parser(
             'new',
+            usage='%(prog)s [options] [path]',
             description='Create a new virtual environment.',
         )
         new.add_argument(
@@ -205,6 +207,7 @@ class Command:
         # Defines the `install` command
         install = subparsers.add_parser(
             'install',
+            usage='%(prog)s [options] [packages]',
             description='Install packages and dependencies.',
         )
         install.add_argument(
@@ -223,6 +226,7 @@ class Command:
         # Defines the `uninstall` command
         uninstall = subparsers.add_parser(
             'uninstall',
+            usage='%(prog)s [options] packages',
             description='Uninstall packages and dependencies.',
         )
         uninstall.add_argument(
@@ -235,6 +239,7 @@ class Command:
         # Defines the `update` command
         update = subparsers.add_parser(
             'update',
+            usage='%(prog)s [options] [packages]',
             description='Update installed PyPI dependencies.',
         )
         update.add_argument(
@@ -247,6 +252,7 @@ class Command:
         # Defines the `list` command
         list = subparsers.add_parser(
             'list',
+            usage='%(prog)s [options]',
             description='List installed packages.',
         )
         list.add_argument(
@@ -490,5 +496,5 @@ def main():
         error('the dependency file could not be found')
     except OSError:
         error('an operating system error occurred')
-    except:
+    except Exception:
         error('an unknown error occurred')
