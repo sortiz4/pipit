@@ -1,4 +1,4 @@
-import alpha
+from . import __patch__
 import argparse
 import json
 import os
@@ -458,6 +458,10 @@ class Command:
         Lists installed packages.
         """
         Pip.list('-o' if self.args.outdated else '')
+
+
+def main():
+    Command().handle()
 
 
 if __name__ == '__main__':
