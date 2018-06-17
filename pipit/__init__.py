@@ -5,20 +5,28 @@ import os
 import re
 import sys
 from functools import reduce
+from subprocess import CalledProcessError
 from subprocess import PIPE
 from subprocess import run
 
 
-class Consts:
+class Clauses:
     """
-    A collection of repeated constants.
+    Version specifier clauses.
     """
     ANY = '*'
-    DEP = 'dependencies'
-    DEV = 'dev-' + DEP
-    FIELDS = [DEP, DEV]
-    PLATFORM = 'platform'
+    COM = '~='
+
+
+class Schema:
+    """
+    Dependency file schema.
+    """
+    DEPS = 'dependencies'
+    DEVD = 'dev-' + DEPS
+    FIELDS = [DEPS, DEVD]
     PYTHON = 'python'
+    SYSTEM = 'system'
     VERSION = 'version'
 
 
@@ -28,10 +36,10 @@ def isupdatable(info):
     """
     try:
         if isinstance(info, dict):
-            version = info.get(Consts.VERSION, Consts.ANY)
+            version = info.get(Schema.VERSION, Clauses.ANY)
         else:
             version = info
-        return not version[0].isalpha()
+        return isinstance(version, str) and not version[0].isalpha()
     except IndexError:
         return False
 
@@ -61,12 +69,13 @@ class Pip:
     file = 'pip.json'
 
     @classmethod
-    def create(cls):
+    def create(cls, base):
         """
         Creates the dependency file (if it doesn't exist).
         """
-        if not os.path.exists(cls.file):
-            with open(cls.file, 'w') as file:
+        path = os.path.join(base, cls.file)
+        if not os.path.exists(path):
+            with open(path, 'w') as file:
                 json.dump({}, file)
                 print('', file=file)
 
@@ -77,7 +86,7 @@ class Pip:
         """
         with open(cls.file) as file:
             pip = json.load(file)
-        for field in Consts.FIELDS:
+        for field in Schema.FIELDS:
             try:
                 schema = pip[field]
             except KeyError:
@@ -91,7 +100,7 @@ class Pip:
         """
         Updates the dependency file.
         """
-        for field in Consts.FIELDS:
+        for field in Schema.FIELDS:
             # Remove empty fields
             try:
                 if len(pip[field]) == 0:
@@ -109,7 +118,7 @@ class Pip:
         """
         bin = 'Scripts' if os.name == 'nt' else 'bin'
         pip = os.path.abspath(os.path.join(cls.env, bin, 'pip'))
-        return run([pip, *args], **kwargs)
+        return run([pip, *args], **kwargs, check=True)
 
     @classmethod
     def install(cls, *args):
@@ -161,6 +170,8 @@ class Command:
     """
     The actual command including the parser.
     """
+    name = 'pipit'
+    version = '0.1.5'
 
     def __init__(self, *args):
         """
@@ -173,7 +184,7 @@ class Command:
             '-v',
             '--version',
             action='version',
-            version='%(prog)s 1.0',
+            version='%(prog)s ' + self.version,
             help="Show this program's version and exit.",
         )
         parser.set_defaults(func=lambda: None)
@@ -281,19 +292,17 @@ class Command:
         """
         Creates a new virtual environment.
         """
-        path = os.path.join(self.args.path or '', Pip.env)
+        base = self.args.path or ''
+        path = os.path.join(base, Pip.env)
         if not os.path.exists(path):
-            run(['virtualenv', path])
-        Pip.create()
+            run(['virtualenv', path], check=True)
+        Pip.create(base)
 
     def install(self):
         """
         Installs packages and dependencies.
         """
-        try:
-            pip = Pip.read()
-        except FileNotFoundError:
-            return
+        pip = Pip.read()
 
         if self.args.packages:
             # Install the packages
@@ -301,7 +310,7 @@ class Command:
             installed = Pip.installed()
 
             # Add the field if it doesn't exist
-            field = Consts.DEP if not self.args.dev else Consts.DEV
+            field = Schema.DEPS if not self.args.dev else Schema.DEVD
             if field not in pip:
                 schema = pip[field] = {}
             else:
@@ -311,9 +320,9 @@ class Command:
             for name, version in self.packages:
                 if not version:
                     # Retrieve the installed version
-                    version = '~=' + installed[name]
+                    version = Clauses.COM + installed[name]
                 try:
-                    schema[name][Consts.VERSION] = version
+                    schema[name][Schema.VERSION] = version
                 except (KeyError, TypeError):
                     schema[name] = version
 
@@ -321,9 +330,9 @@ class Command:
             Pip.write(pip)
         else:
             # No packages provided (install dependencies)
-            fields = [Consts.DEP]
+            fields = [Schema.DEPS]
             if self.args.dev:
-                fields.append(Consts.DEV)
+                fields.append(Schema.DEVD)
 
             # Collect the appropriate packages
             packages = []
@@ -334,19 +343,9 @@ class Command:
                     continue
                 for name, info in schema.items():
                     if isinstance(info, dict):
-                        # Check the platform
-                        try:
-                            platform = info[Consts.PLATFORM]
-                            if os.name not in platform.split(','):
-                                # Skip this package if it's
-                                # not meant for this platform
-                                continue
-                        except KeyError:
-                            pass
-
                         # Check the Python version
                         try:
-                            python = info[Consts.PYTHON]
+                            python = info[Schema.PYTHON]
                             if not reduce(
                                 lambda a, b: a or sys.version.startswith(b),
                                 python.split(','),
@@ -358,13 +357,23 @@ class Command:
                         except KeyError:
                             pass
 
+                        # Check the system string
+                        try:
+                            system = info[Schema.SYSTEM]
+                            if os.name not in system.split(','):
+                                # Skip this package if it's
+                                # not meant for this system
+                                continue
+                        except KeyError:
+                            pass
+
                         # Get the version string
-                        version = info.get(Consts.VERSION, Consts.ANY)
+                        version = info.get(Schema.VERSION, Clauses.ANY)
                     else:
                         version = info
 
                     # Format the install string (version must not be empty)
-                    if version == Consts.ANY:
+                    if version == Clauses.ANY:
                         packages.append(name)
                     elif version[0].isdigit():
                         packages.append('{}=={}'.format(name, version))
@@ -381,16 +390,13 @@ class Command:
         """
         Uninstalls packages and dependencies.
         """
-        try:
-            pip = Pip.read()
-        except FileNotFoundError:
-            return
+        pip = Pip.read()
 
         # Uninstall the packages
         Pip.uninstall(*self.args.packages)
 
         # Remove the dependencies
-        for field in Consts.FIELDS:
+        for field in Schema.FIELDS:
             try:
                 schema = pip[field]
             except KeyError:
@@ -408,19 +414,14 @@ class Command:
         """
         Updates installed PyPI dependencies.
         """
-        try:
-            pip = Pip.read()
-        except FileNotFoundError:
-            return
+        pip = Pip.read()
 
         # Compute the minimum updatable set (exclude external packages)
         dependencies = {*{
-                name for name, info
-                in pip.get(Consts.DEP, {}).items()
+                name for name, info in pip.get(Schema.DEPS, {}).items()
                 if isupdatable(info)
             }, *{
-                name for name, info
-                in pip.get(Consts.DEV, {}).items()
+                name for name, info in pip.get(Schema.DEVD, {}).items()
                 if isupdatable(info)
         }}
         outdated = Pip.outdated()
@@ -441,10 +442,12 @@ class Command:
             installed = Pip.installed()
 
             # Get the updated package version
-            updated = [(name, '~=' + installed[name]) for name in updatable]
+            updated = [
+                (name, Clauses.COM + installed[name]) for name in updatable
+            ]
 
             # Update the dependencies
-            for field in Consts.FIELDS:
+            for field in Schema.FIELDS:
                 try:
                     schema = pip[field]
                 except KeyError:
@@ -452,7 +455,7 @@ class Command:
                 for name, version in updated:
                     if name in schema:
                         try:
-                            schema[name][Consts.VERSION] = version
+                            schema[name][Schema.VERSION] = version
                         except TypeError:
                             schema[name] = version
 
@@ -466,9 +469,26 @@ class Command:
         Pip.list('-o' if self.args.outdated else '')
 
 
+def error(*args, **kwargs):
+    """
+    Formatted error messaging.
+    """
+    print(Command.name + ': error:', *args, **kwargs, file=sys.stderr)
+
+
 def main():
-    Command().handle()
-
-
-if __name__ == '__main__':
-    Command().handle()
+    """
+    Execute the command and gracefully handle all errors.
+    """
+    try:
+        Command().handle()
+    except CalledProcessError:
+        pass
+    except (AttributeError, IndexError, TypeError, ValueError):
+        error('malformed dependency file or package arguments')
+    except FileNotFoundError:
+        error('the dependency file could not be found')
+    except OSError:
+        error('an operating system error occurred')
+    except:
+        error('an unknown error occurred')

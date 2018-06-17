@@ -49,8 +49,8 @@ $ pipit install [-d] [packages]
    to your `dependencies` using the latest compatible version. If the `--dev`
    option is provided, they will be added to your `dev-dependencies`.
 2. If no `packages` are provided, the tool will install your `dependencies`,
-   respecting both `platform` and `python` constraints. If the `--dev` option
-   is provided, the tool will install your `dev-dependencies`.
+   respecting both `python` and `system` constraints. If the `--dev` option is
+   provided, the tool will install your `dev-dependencies`.
 
 ### uninstall
 ```sh
@@ -87,14 +87,14 @@ optional fields: `dependencies` and `dev-dependencies`. Both fields must be
 JSON objects with each field mapping a package name to its version information.
 
 Version information may be a string or an object. A version object may contain
-three optional fields: `platform`, `python`, and `version`.
+three optional fields: `python`, `system`, and `version`.
 
-1. `platform` is a comma-separated string of exclusive platforms where the
-   package may be installed (defined by `os.name`). If `platform` is not
-   provided, then the package will be installed on all platforms.
-2. `python` is a comma-separated string of exclusive Python versions where the
+1. `python` is a comma-separated string of exclusive Python versions where the
    package may be installed. If `python` is not provided, then the package will
    be installed on all Python versions.
+2. `system` is a comma-separated string of exclusive systems where the package
+   may be installed (defined by `os.name`). If `system` is not provided, then
+   the package will be installed on all systems.
 3. `version` is a string representing the package version to install. If
    `version` is not provided, any version will be assumed.
 
@@ -116,7 +116,7 @@ supported version control URL schemes supported by `pip`.
     "certifi": "*",
     "django": ">=2.0,<=2.1",
     "gunicorn": {
-      "platform": "posix",
+      "system": "posix",
       "version": "19.8.*"
     },
     "pytz": "~=2018.3"
@@ -124,10 +124,10 @@ supported version control URL schemes supported by `pip`.
   "dev-dependencies": {
     "pytest": {
       "python": "3.5,3.6",
-      "version":"git+https://github.com/pytest-dev/pytest.git"
+      "version": "git+https://github.com/pytest-dev/pytest.git"
     },
     "selenium": {
-      "platform": "nt"
+      "system": "nt"
     },
     "urllib3": "git+https://github.com/urllib3/urllib3.git"
   }
