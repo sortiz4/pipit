@@ -8,12 +8,18 @@ from functools import reduce
 from subprocess import PIPE
 from subprocess import run
 
-ANY = '*'
-DEP = 'dependencies'
-DEV = 'dev-' + DEP
-PLATFORM = 'platform'
-PYTHON = 'python'
-VERSION = 'version'
+
+class Consts:
+    """
+    A collection of repeated constants.
+    """
+    ANY = '*'
+    DEP = 'dependencies'
+    DEV = 'dev-' + DEP
+    FIELDS = [DEP, DEV]
+    PLATFORM = 'platform'
+    PYTHON = 'python'
+    VERSION = 'version'
 
 
 def isupdatable(info):
@@ -22,7 +28,7 @@ def isupdatable(info):
     """
     try:
         if isinstance(info, dict):
-            version = info.get(VERSION, ANY)
+            version = info.get(Consts.VERSION, Consts.ANY)
         else:
             version = info
         return not version[0].isalpha()
@@ -71,7 +77,7 @@ class Pip:
         """
         with open(cls.file) as file:
             pip = json.load(file)
-        for field in [DEP, DEV]:
+        for field in Consts.FIELDS:
             try:
                 schema = pip[field]
             except KeyError:
@@ -85,7 +91,7 @@ class Pip:
         """
         Updates the dependency file.
         """
-        for field in [DEP, DEV]:
+        for field in Consts.FIELDS:
             # Remove empty fields
             try:
                 if len(pip[field]) == 0:
@@ -295,7 +301,7 @@ class Command:
             installed = Pip.installed()
 
             # Add the field if it doesn't exist
-            field = DEP if not self.args.dev else DEV
+            field = Consts.DEP if not self.args.dev else Consts.DEV
             if field not in pip:
                 schema = pip[field] = {}
             else:
@@ -307,7 +313,7 @@ class Command:
                     # Retrieve the installed version
                     version = '~=' + installed[name]
                 try:
-                    schema[name][VERSION] = version
+                    schema[name][Consts.VERSION] = version
                 except (KeyError, TypeError):
                     schema[name] = version
 
@@ -315,9 +321,9 @@ class Command:
             Pip.write(pip)
         else:
             # No packages provided (install dependencies)
-            fields = [DEP]
+            fields = [Consts.DEP]
             if self.args.dev:
-                fields.append(DEV)
+                fields.append(Consts.DEV)
 
             # Collect the appropriate packages
             packages = []
@@ -330,7 +336,7 @@ class Command:
                     if isinstance(info, dict):
                         # Check the platform
                         try:
-                            platform = info[PLATFORM]
+                            platform = info[Consts.PLATFORM]
                             if os.name not in platform.split(','):
                                 # Skip this package if it's
                                 # not meant for this platform
@@ -340,7 +346,7 @@ class Command:
 
                         # Check the Python version
                         try:
-                            python = info[PYTHON]
+                            python = info[Consts.PYTHON]
                             if not reduce(
                                 lambda a, b: a or sys.version.startswith(b),
                                 python.split(','),
@@ -353,12 +359,12 @@ class Command:
                             pass
 
                         # Get the version string
-                        version = info.get(VERSION, ANY)
+                        version = info.get(Consts.VERSION, Consts.ANY)
                     else:
                         version = info
 
                     # Format the install string (version must not be empty)
-                    if version == ANY:
+                    if version == Consts.ANY:
                         packages.append(name)
                     elif version[0].isdigit():
                         packages.append('{}=={}'.format(name, version))
@@ -384,7 +390,7 @@ class Command:
         Pip.uninstall(*self.args.packages)
 
         # Remove the dependencies
-        for field in [DEP, DEV]:
+        for field in Consts.FIELDS:
             try:
                 schema = pip[field]
             except KeyError:
@@ -410,11 +416,11 @@ class Command:
         # Compute the minimum updatable set (exclude external packages)
         dependencies = {*{
                 name for name, info
-                in pip.get(DEP, {}).items()
+                in pip.get(Consts.DEP, {}).items()
                 if isupdatable(info)
             }, *{
                 name for name, info
-                in pip.get(DEV, {}).items()
+                in pip.get(Consts.DEV, {}).items()
                 if isupdatable(info)
         }}
         outdated = Pip.outdated()
@@ -438,7 +444,7 @@ class Command:
             updated = [(name, '~=' + installed[name]) for name in updatable]
 
             # Update the dependencies
-            for field in [DEP, DEV]:
+            for field in Consts.FIELDS:
                 try:
                     schema = pip[field]
                 except KeyError:
@@ -446,7 +452,7 @@ class Command:
                 for name, version in updated:
                     if name in schema:
                         try:
-                            schema[name][VERSION] = version
+                            schema[name][Consts.VERSION] = version
                         except TypeError:
                             schema[name] = version
 
