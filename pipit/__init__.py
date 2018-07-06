@@ -171,7 +171,7 @@ class Command:
     The actual command including the parser.
     """
     name = 'pipit'
-    version = '0.1.5'
+    version = '0.2.0'
 
     def __init__(self, *args):
         """
@@ -201,6 +201,12 @@ class Command:
             'path',
             nargs='?',
             help='Where to install the environment.',
+        )
+        new.add_argument(
+            '-p',
+            '--python',
+            type=str,
+            help='The Python interpreter to use.',
         )
         new.set_defaults(func=self.new)
 
@@ -300,14 +306,25 @@ class Command:
         """
         base = self.args.path or ''
         path = os.path.join(base, Pip.env)
+        args = ['virtualenv', path]
+
+        if self.args.python:
+            # Append the given Python interpreter
+            args.append('-p ' + self.args.python)
+
+        # Create the environment if it does not exist
         if not os.path.exists(path):
-            run(['virtualenv', path], check=True)
+            run(args, check=True)
         Pip.create(base)
 
     def install(self):
         """
         Installs packages and dependencies.
         """
+        # Try to create an environment before installing anything
+        self.args.path = None
+        self.args.python = None
+        self.new()
         pip = Pip.read()
 
         if self.args.packages:
