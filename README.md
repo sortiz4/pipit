@@ -34,8 +34,8 @@ $ pipit install certifi 'django>=2.*' 'pytz==2018.*'\
 $ pipit new [path]
 ```
 
-`new` will create a fresh virtual environment, `.pipenv`, and a dependency
-file, `pip.json`, in the current directory or the directory provided by the
+`new` will create a fresh virtual environment, `.pipit`, and a dependency file,
+`pipit.json`, in the current directory or the directory provided by the
 optional `path` argument.
 
 ### install
@@ -82,7 +82,7 @@ $ pipit list [-o]
 provided, only the outdated installed packages will be shown.
 
 ## Schema
-`pip.json` describes your project dependencies as a JSON object with two
+`pipit.json` describes your project dependencies as a JSON object with two
 optional fields: `dependencies` and `dev-dependencies`. Both fields must be
 JSON objects with each field mapping a package name to its version information.
 

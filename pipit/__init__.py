@@ -65,8 +65,8 @@ class Pip:
     """
     A collection of methods that map to various pip tasks.
     """
-    env = '.pipenv'
-    file = 'pip.json'
+    env = '.pipit'
+    file = 'pipit.json'
 
     @classmethod
     def create(cls, base):
@@ -171,7 +171,7 @@ class Command:
     The actual command including the parser.
     """
     name = 'pipit'
-    version = '0.2.0'
+    version = '0.3.0'
 
     def __init__(self, *args):
         """
