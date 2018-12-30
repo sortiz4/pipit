@@ -5,8 +5,7 @@ project's virtual environment in your current working directory granting you
 full control when the need arises.
 
 ## Requirements
-- Python 3 or greater
-- `virtualenv` and `pip`
+- Python 3, `virtualenv`, and `pip`
 
 ## Installation
 `pipit` can be installed through `pip` directly from GitHub.
