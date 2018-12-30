@@ -171,7 +171,7 @@ class Command:
     The actual command including the parser.
     """
     name = 'pipit'
-    version = '0.3.0'
+    version = '0.4.0'
 
     def __init__(self, *args):
         """
@@ -261,13 +261,15 @@ class Command:
             usage='%(prog)s [options]',
             description='List installed packages.',
         )
-        list.add_argument(
-            '-o',
-            '--outdated',
-            action='store_true',
-            help='Only list outdated packages.',
-        )
         list.set_defaults(func=self.list)
+
+        # Defines the `outdated` command
+        outdated = subparsers.add_parser(
+            'outdated',
+            usage='%(prog)s [options]',
+            description='List outdated packages.',
+        )
+        outdated.set_defaults(func=self.outdated)
 
         # Parse the arguments
         self.args = parser.parse_args(args or None)
@@ -489,7 +491,13 @@ class Command:
         """
         Lists installed packages.
         """
-        Pip.list('-o' if self.args.outdated else '')
+        Pip.list()
+
+    def outdated(self):
+        """
+        Lists outdated packages.
+        """
+        Pip.list('-o')
 
 
 def error(*args, **kwargs):
