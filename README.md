@@ -5,7 +5,7 @@ project's virtual environment in your current working directory granting you
 full control when the need arises.
 
 ## Requirements
-- Python 3, `virtualenv`, and `pip`
+- Python 3, `virtualenv`, and `pip`.
 
 ## Installation
 `pipit` can be installed through `pip` directly from GitHub.
@@ -24,8 +24,7 @@ the subdirectory specifier) are supported by this tool.
 An example is provided:
 
 ```sh
-$ pipit install certifi 'django>=2.*' 'pytz==2018.*'\
-  git+https://github.com/urllib3/urllib3.git#egg=urllib3
+$ pipit install certifi 'django>=2.*' 'pytz==2018.*' git+https://github.com/urllib3/urllib3.git#egg=urllib3
 ```
 
 ### new
