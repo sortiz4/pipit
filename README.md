@@ -4,11 +4,9 @@ Yet another tool simplifying Python dependency management by combining both
 project's virtual environment in your current working directory granting you
 full control when the need arises.
 
-## Requirements
-- Python 3, `virtualenv`, and `pip`.
-
 ## Installation
-`pipit` can be installed through `pip` directly from GitHub.
+`pipit` requires Python 3, `virtualenv`, and `pip`. Once these requirements
+have been met, `pipit` can be installed through `pip` directly from GitHub.
 
 ```sh
 $ pip install git+https://github.com/sortiz4/pipit.git#egg=pipit
