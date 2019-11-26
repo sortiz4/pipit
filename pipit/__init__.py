@@ -14,6 +14,7 @@ class Clauses:
     """
     Version specifier clauses.
     """
+
     ANY = '*'
     COM = '~='
 
@@ -22,6 +23,7 @@ class Schema:
     """
     Dependency file schema.
     """
+
     DEPS = 'dependencies'
     DEVD = 'dev-' + DEPS
     FIELDS = [DEPS, DEVD]
@@ -65,6 +67,7 @@ class Pip:
     """
     A collection of methods that map to various pip tasks.
     """
+
     env = '.pipit'
     file = 'pipit.json'
 
@@ -170,6 +173,7 @@ class Command:
     """
     The actual command including the parser.
     """
+
     name = 'pipit'
     version = '0.4.0'
 
@@ -442,13 +446,16 @@ class Command:
         pip = Pip.read()
 
         # Compute the minimum updatable set (exclude external packages)
-        dependencies = {*{
+        dependencies = {
+            *{
                 name for name, info in pip.get(Schema.DEPS, {}).items()
                 if isupdatable(info)
-            }, *{
+            },
+            *{
                 name for name, info in pip.get(Schema.DEVD, {}).items()
                 if isupdatable(info)
-        }}
+            },
+        }
         outdated = Pip.outdated()
 
         if self.args.packages:
