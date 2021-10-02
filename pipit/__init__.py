@@ -14,7 +14,6 @@ class Clauses:
     """
     Version specifier clauses.
     """
-
     ANY = '*'
     COM = '~='
 
@@ -23,7 +22,6 @@ class Schema:
     """
     Dependency file schema.
     """
-
     DEPS = 'dependencies'
     DEVD = 'dev-' + DEPS
     FIELDS = [DEPS, DEVD]
@@ -67,7 +65,6 @@ class Pip:
     """
     A collection of methods that map to various pip tasks.
     """
-
     env = '.pipit'
     file = 'pipit.json'
 
@@ -173,7 +170,6 @@ class Command:
     """
     The actual command including the parser.
     """
-
     name = 'pipit'
     version = '0.4.0'
 
