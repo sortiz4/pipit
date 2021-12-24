@@ -23,8 +23,8 @@ class Schema:
     Dependency file schema.
     """
     DEPS = 'dependencies'
-    DEVD = 'dev-' + DEPS
-    FIELDS = [DEPS, DEVD]
+    DEVS = 'dev-' + DEPS
+    FIELDS = [DEPS, DEVS]
     PYTHON = 'python'
     SYSTEM = 'system'
     VERSION = 'version'
@@ -154,7 +154,7 @@ class Pip:
         """
         Lists the installed packages in JSON.
         """
-        process = cls.list('--format=json', *args, shell=True, stdout=PIPE)
+        process = cls.list('--format=json', *args, stdout=PIPE)
         installed = json.loads(process.stdout.decode(sys.stdout.encoding))
         return {pkg['name'].lower(): pkg['version'] for pkg in installed}
 
@@ -335,7 +335,7 @@ class Command:
             installed = Pip.installed()
 
             # Add the field if it doesn't exist
-            field = Schema.DEPS if not self.args.dev else Schema.DEVD
+            field = Schema.DEPS if not self.args.dev else Schema.DEVS
             if field not in pip:
                 schema = pip[field] = {}
             else:
@@ -357,7 +357,7 @@ class Command:
             # No packages provided (install dependencies)
             fields = [Schema.DEPS]
             if self.args.dev:
-                fields.append(Schema.DEVD)
+                fields.append(Schema.DEVS)
 
             # Collect the appropriate packages
             packages = []
@@ -448,7 +448,7 @@ class Command:
                 if isupdatable(info)
             },
             *{
-                name for name, info in pip.get(Schema.DEVD, {}).items()
+                name for name, info in pip.get(Schema.DEVS, {}).items()
                 if isupdatable(info)
             },
         }
