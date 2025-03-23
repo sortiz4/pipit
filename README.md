@@ -1,8 +1,8 @@
 # Pipit
-Yet another tool simplifying Python dependency management by combining both
-`virtualenv` and `pip`. Unlike `pipenv` and `poetry`, this tool places your
-project's virtual environment in your current working directory granting you
-full control when the need arises.
+`pipit` is a lightweight Python dependency manager and a thin layer built on
+top of `pip`. Designed with simplicity in mind, `pipit` provides just enough
+abstraction to make package management more convenient and efficient for
+developers. This is an old tool and shouldn't be used.
 
 ## Installation
 `pipit` requires Python 3, `virtualenv`, and `pip`. Once these requirements
